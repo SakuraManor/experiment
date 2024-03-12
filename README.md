@@ -1,2 +1,2 @@
-1. 执行pip install -r Requirements.txt， 安装所需要的包。
+1. 执行pip install -r requirements.txt， 安装所需要的包。
 2. 选择对应的模型，并为其添加数据集，就能够运行。运行结果将会输出到控制台上，可以根据自己的需要使用这些数据。
