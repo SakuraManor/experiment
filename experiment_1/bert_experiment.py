@@ -1,11 +1,11 @@
-import re
 import operator
-import os, sys
-from lsi_model import *
+import os
+import re
+from sentence_transformers import SentenceTransformer
+from scipy.spatial.distance import cosine
 
+model = SentenceTransformer('sentence-transformers/bert-base-nli-mean-tokens')
 
-stopwords = []
-# 打开文件
 COOKED_FOLDER = './GanntDataset/high/'  # 文件夹的地址
 dirs = os.listdir(COOKED_FOLDER)
 
@@ -67,15 +67,10 @@ for file in dirs:
         answer[key] = tmp
     low_contents.append(text)
 
+source_embeddings = model.encode(high_content)
+target_embeddings = model.encode(low_contents)
 
-dictionary, model, index = create_lsi_model(low_contents, 64)
-
-best_value = 0
-best_map = 0
-# Calculate cosine similarities
-# Cosine similarities are in [-1, 1]. Higher means more similar
-# result = {0.1: 0, 0.2: 0, 0.4: 0, 0.6: 0, 0.8: 0, 1: 0, "pre1": 0, "pre2": 0, "pre5": 0,
-#           "recall1": 0, "recall2": 0, "recall5": 0}
+result1 = {0.1: 0, 0.2: 0, 0.4: 0, 0.6: 0, 0.8: 0, 1:0}
 result = {"pre1": 0, "pre2": 0, "pre5": 0, "recall1": 0, "recall2": 0, "recall5": 0}
 ap = 0
 for i in range(0, len(high_content)):
@@ -87,15 +82,18 @@ for i in range(0, len(high_content)):
     for ans in answer.get(highTmp):
         answerSet.append(ans)
 
+    i_dict = {}
+    for j in range(0, len(low_contents)):
+        cosine_sim = 1 - cosine(source_embeddings[i], target_embeddings[j])
+        i_dict[low_names[j]] = cosine_sim
+    sim_list = sorted(i_dict.items(), key=operator.itemgetter(1), reverse=True)
 
     # id = 69 + i
     correct = 0
-    sims = calculate_sim_by_lsi(dictionary, model, index, high_content[i])
     sim_dict = {}
-    for j in range(0, len(sims)):
-        sim_dict[low_names[j]] = sims[j]
+    for j in range(0, len(sim_list)):
+        sim_dict[low_names[j]] = sim_list[j]
 
-    sim_list = sorted(sim_dict.items(), key=operator.itemgetter(1), reverse=True)
 
     curCorrect = 0
     cur_artifact_pr = {}
@@ -116,12 +114,7 @@ for i in range(0, len(high_content)):
             cur_artifact_pr["pre5"] = curCorrect / (j + 1)
             cur_artifact_pr["recall5"] = curCorrect / len(answerSet)
 
-    # result[0.1] = (result.get(0.1) + cur_artifact_pr.get(0.1))
-    # result[0.2] = (result.get(0.2) + cur_artifact_pr.get(0.2))
-    # result[0.4] = (result.get(0.4) + cur_artifact_pr.get(0.4))
-    # result[0.6] = (result.get(0.6) + cur_artifact_pr.get(0.6))
-    # result[0.8] = (result.get(0.8) + cur_artifact_pr.get(0.8))
-    # result[1] = (result.get(1) + cur_artifact_pr.get(1))
+
     result["pre1"] = (result.get("pre1") + cur_artifact_pr.get("pre1"))
     result["pre2"] = (result.get("pre2") + cur_artifact_pr.get("pre2", 0))
     result["pre5"] = (result.get("pre5") + cur_artifact_pr.get("pre5", 0))
@@ -134,4 +127,7 @@ result["f1_1"] = (2 * result["pre1"] * result["recall1"]) / (result["pre1"] + re
 result["f1_2"] = (2 * result["pre2"] * result["recall2"]) / (result["pre2"] + result["recall2"])
 result["f1_5"] = (2 * result["pre5"] * result["recall5"]) / (result["pre5"] + result["recall5"])
 for key, value in result.items():
+    print(f"{key}: " + "%.2f" % (value / (len(high_content))))
+
+for key, value in result1.items():
     print(f"{key}: " + "%.2f" % (value / (len(high_content))))

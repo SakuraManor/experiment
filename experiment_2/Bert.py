@@ -1,4 +1,3 @@
-import torch
 from scipy.spatial.distance import cosine
 from sentence_transformers import SentenceTransformer
 import re
