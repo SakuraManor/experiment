@@ -31,7 +31,6 @@ for file in dirs:
 
     high_content.append(text)
 
-
 # 打开文件
 COOKED_FOLDER = './GanntDataset/low/'  # 文件夹的地址
 dirs = os.listdir(COOKED_FOLDER)
@@ -70,7 +69,7 @@ for file in dirs:
 source_embeddings = model.encode(high_content)
 target_embeddings = model.encode(low_contents)
 
-result1 = {0.1: 0, 0.2: 0, 0.4: 0, 0.6: 0, 0.8: 0, 1:0}
+result1 = {0.1: 0, 0.2: 0, 0.4: 0, 0.6: 0, 0.8: 0, 1: 0}
 result = {"pre1": 0, "pre2": 0, "pre5": 0, "recall1": 0, "recall2": 0, "recall5": 0}
 ap = 0
 for i in range(0, len(high_content)):
@@ -94,7 +93,6 @@ for i in range(0, len(high_content)):
     for j in range(0, len(sim_list)):
         sim_dict[low_names[j]] = sim_list[j]
 
-
     curCorrect = 0
     cur_artifact_pr = {}
     allPrecision = 0
@@ -114,14 +112,12 @@ for i in range(0, len(high_content)):
             cur_artifact_pr["pre5"] = curCorrect / (j + 1)
             cur_artifact_pr["recall5"] = curCorrect / len(answerSet)
 
-
     result["pre1"] = (result.get("pre1") + cur_artifact_pr.get("pre1"))
     result["pre2"] = (result.get("pre2") + cur_artifact_pr.get("pre2", 0))
     result["pre5"] = (result.get("pre5") + cur_artifact_pr.get("pre5", 0))
     result["recall5"] = (result.get("recall5") + cur_artifact_pr.get("recall5", 0))
     result["recall2"] = (result.get("recall2") + cur_artifact_pr.get("recall2", 0))
     result["recall1"] = (result.get("recall1") + cur_artifact_pr.get("recall1", 0))
-
 
 result["f1_1"] = (2 * result["pre1"] * result["recall1"]) / (result["pre1"] + result["recall1"])
 result["f1_2"] = (2 * result["pre2"] * result["recall2"]) / (result["pre2"] + result["recall2"])
